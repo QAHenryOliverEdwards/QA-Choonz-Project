@@ -53,11 +53,13 @@ let search =()=>{
         table.id = "results-table";
         table.className = "full-size-table";
         centreCol.append(table);
+        centreCol.append(additionLink("Album"));
     } else if (category === "Track") {
         let table = getTracks(name);
         table.id = "results-table";
         table.className = "full-size-table";
         centreCol.append(table);
+        centreCol.append(additionLink("Track"));
     }
 }
 

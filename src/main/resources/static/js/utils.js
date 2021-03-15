@@ -120,6 +120,8 @@ let addToArtist = (data, table) => {
     let countNum = 1;
     for (let artist in data) {
         let tr = document.createElement('tr');
+        let refNum = countNum;
+        tr.id = `row-${refNum}`;
 
         let count = document.createElement('th');
         count.className = "regular-text";
@@ -142,7 +144,16 @@ let addToArtist = (data, table) => {
         album.className = "regular-text";
         album.innerHTML = allAlbums;
 
-        tr.append(count, name, album);
+        let actions = document.createElement('td');
+
+        let deleteButton = document.createElement('button');
+        deleteButton.className = "delete-button";
+        deleteButton.innerHTML = `&#10071`;
+        deleteButton.addEventListener('click', ()=>{deleteAction(refNum)});
+
+        actions.append(deleteButton);
+
+        tr.append(count, name, album, actions);
         table.append(tr);
 
         countNum += 1;
@@ -198,6 +209,8 @@ let addToGenre = (data, table) => {
     let countNum = 1;
     for (let genre in data) {
         let tr = document.createElement('tr');
+        let refNum = countNum;
+        tr.id = `row-${refNum}`;
 
         let count = document.createElement('th');
         count.className = "regular-text";
@@ -280,6 +293,7 @@ let addToPlaylist = (data, table) => {
     let countNum = 1;
     for (let playlist in data) {
         let tr = document.createElement('tr');
+        tr.id = `row-${countNum}`;
 
         let count = document.createElement('th');
         count.className = "regular-text";
@@ -366,6 +380,8 @@ let addToAlbum = (data, table) => {
     let countNum = 1;
     for (let album in data) {
         let tr = document.createElement('tr');
+        let refNum = countNum;
+        tr.id = `row-${refNum}`;
 
         let count = document.createElement('th');
         count.className = "regular-text";
@@ -486,6 +502,8 @@ let addToTrack = (data, table) => {
     let countNum = 1;
     for (let track in data) {
         let tr = document.createElement('tr');
+        let refNum = countNum;
+        tr.id = `row-${refNum}`;
 
         let count = document.createElement('th');
         count.className = "regular-text";
@@ -495,13 +513,77 @@ let addToTrack = (data, table) => {
         name.className = "regular-text";
         name.innerHTML = data[track]['name'];
 
+        let album = document.createElement('td');
+        album.className = "regular-text";
+        fetch('albums/read')
+            .then((response)=>{
+                return response.json();
+            }).then((responseData)=>{
+            let trackLookingFor = data[track]['name'];
+            for (let albumLocal in responseData) {
+                let albumName = responseData[albumLocal]['name'];
+                for (let trackLocal in responseData[albumLocal]['tracks']) {
+                    let trackName = responseData[albumLocal]['tracks'][trackLocal]['name'];
+                    if (trackLookingFor === trackName) {
+                        album.innerHTML = albumName;
+                        break;
+                    }
+                }
+            }
+        })
+
         let duration = document.createElement('td');
         duration.className = "regular-text";
         duration.innerHTML = data[track]['duration'];
 
-        tr.append(count, name, duration);
+        let playlist = document.createElement('td');
+        playlist.className = "regular-text";
+        fetch('playlists/read')
+            .then((response)=>{
+                return response.json();
+            }).then((responseData)=>{
+            let trackLookingFor = data[track]['name'];
+            for (let playlistLocal in responseData) {
+                let playlistName = responseData[playlistLocal]['name'];
+                for (let trackLocal in responseData[playlistLocal]['tracks']) {
+                    let trackName = responseData[playlistLocal]['tracks'][trackLocal]['name'];
+                    if (trackLookingFor === trackName) {
+                        playlist.innerHTML = playlistName;
+                        break;
+                    }
+                }
+            }
+        })
+
+        tr.append(count, name, album, duration, playlist);
         table.append(tr);
 
         countNum += 1;
     }
+}
+
+let deleteAction = async (rowID)=>{
+    console.log(rowID);
+    let category = document.querySelector('#select-bar').value;
+    category = category.toString().toLowerCase();
+    let row = document.querySelector('#results-table').rows[rowID];
+    let name = row.cells[1].innerHTML;
+    let entityID;
+
+    await fetch(`${category}s/read/name/${name}`)
+        .then((response)=>{
+            return response.json();
+        }).then((responseData)=>{
+            console.log(responseData);
+            console.log(responseData[0])
+            entityID = responseData[0]['id'];
+        })
+
+    fetch(`${category}s/delete/${entityID}`, {
+        method: 'DELETE'
+    })
+        .finally(()=>{
+            let searchButton = document.querySelector('#search-button');
+            searchButton.click();
+        })
 }
